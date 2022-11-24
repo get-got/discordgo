@@ -188,7 +188,11 @@ func (b *Bucket) Release(headers http.Header) error {
 	if remaining != "" {
 		parsedRemaining, err := strconv.ParseInt(remaining, 10, 32)
 		if err != nil {
-			return err
+			parsedRemainingF, err := strconv.ParseFloat(remaining, 32)
+			if err != nil {
+				return err
+			}
+			parsedRemaining = int64(parsedRemainingF)
 		}
 		b.Remaining = int(parsedRemaining)
 	}
