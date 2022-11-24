@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/bwmarrin/discordgo"
+	"github.com/get-got/discordgo"
 )
 
 func ExampleApplication() {

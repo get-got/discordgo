@@ -1,6 +1,6 @@
 ## DiscordGo
 <hr>
-<img align="right" src="http://bwmarrin.github.io/discordgo/img/discordgo.png">
+<img align="right" src="http://get-got.github.io/discordgo/img/discordgo.png">
 
 [Go](https://golang.org/) (golang) interface for the [Discord](https://discord.com/) 
 chat service.  Provides both low-level direct bindings to the 
@@ -20,9 +20,9 @@ gamers that's free, secure, and works on both your desktop and phone.
 
 ### Learn More
 * Check out the [Getting Started](GettingStarted) section
-* Read the reference docs on [Godoc](https://godoc.org/github.com/bwmarrin/discordgo) or [GoWalker](https://gowalker.org/github.com/bwmarrin/discordgo)
-* Try the [examples](https://github.com/bwmarrin/discordgo/tree/master/examples)
-* Explore [Awesome DiscordGo](https://github.com/bwmarrin/discordgo/wiki/Awesome-DiscordGo)
+* Read the reference docs on [Godoc](https://godoc.org/github.com/get-got/discordgo) or [GoWalker](https://gowalker.org/github.com/get-got/discordgo)
+* Try the [examples](https://github.com/get-got/discordgo/tree/master/examples)
+* Explore [Awesome DiscordGo](https://github.com/get-got/discordgo/wiki/Awesome-DiscordGo)
 
 ### Join Us!
 Both of the below links take you to chat channels where you can get more 
