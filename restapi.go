@@ -274,6 +274,7 @@ func (s *Session) Login(email, password string) (err error) {
 	}
 
 	s.Token = temp.Token
+	s.Identify.Token = temp.Token
 	s.MFA = temp.MFA
 	return
 }
