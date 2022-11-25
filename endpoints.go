@@ -34,6 +34,15 @@ var (
 	EndpointStickers       = EndpointAPI + "stickers/"
 	EndpointStageInstances = EndpointAPI + "stage-instances"
 
+	EndpointAuth           = EndpointAPI + "auth/"
+	EndpointLogin          = EndpointAuth + "login"
+	EndpointLogout         = EndpointAuth + "logout"
+	EndpointVerify         = EndpointAuth + "verify"
+	EndpointVerifyResend   = EndpointAuth + "verify/resend"
+	EndpointForgotPassword = EndpointAuth + "forgot"
+	EndpointResetPassword  = EndpointAuth + "reset"
+	EndpointRegister       = EndpointAuth + "register"
+
 	EndpointCDN             = "https://cdn.discordapp.com/"
 	EndpointCDNAttachments  = EndpointCDN + "attachments/"
 	EndpointCDNAvatars      = EndpointCDN + "avatars/"
