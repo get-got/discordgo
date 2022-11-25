@@ -151,7 +151,7 @@ func New(args ...interface{}) (s *Session, err error) {
 	} else {
 		err = s.Login(auth, pass)
 		// TODO: Remove last s.Token part, Deprecated - Kept for backwards compatibility.
-		if err != nil || s.Identify.Token == "" || s.Token == "" {
+		if err != nil /*|| s.Identify.Token == ""*/ || s.Token == "" {
 			if s.MFA {
 				err = ErrMFA
 			} else {

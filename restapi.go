@@ -268,16 +268,13 @@ func (s *Session) Login(email, password string) (err error) {
 		MFA   bool   `json:"mfa"`
 	}{}
 
-	log.Println("1")
 	err = unmarshal(response, &temp)
 	if err != nil {
 		return
 	}
-	log.Println(temp)
 
 	s.Token = temp.Token
 	s.MFA = temp.MFA
-	log.Println("2", s.Token)
 	return
 }
 
