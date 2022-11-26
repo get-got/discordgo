@@ -15,7 +15,6 @@ import "strconv"
 
 // APIVersion is the Discord API version used for the REST and Websocket API.
 var APIVersion = "9"
-var APIVersionSB = "9"
 
 // Known Discord API Endpoints.
 var (
@@ -26,7 +25,6 @@ var (
 
 	EndpointDiscord        = "https://discord.com/"
 	EndpointAPI            = EndpointDiscord + "api/v" + APIVersion + "/"
-	EndpointAPI_SB         = EndpointDiscord + "api/v" + APIVersionSB + "/"
 	EndpointGuilds         = EndpointAPI + "guilds/"
 	EndpointChannels       = EndpointAPI + "channels/"
 	EndpointUsers          = EndpointAPI + "users/"
@@ -36,7 +34,7 @@ var (
 	EndpointStickers       = EndpointAPI + "stickers/"
 	EndpointStageInstances = EndpointAPI + "stage-instances"
 
-	EndpointAuth           = EndpointAPI_SB + "auth/"
+	EndpointAuth           = EndpointAPI + "auth/"
 	EndpointLogin          = EndpointAuth + "login"
 	EndpointLogout         = EndpointAuth + "logout"
 	EndpointVerify         = EndpointAuth + "verify"
