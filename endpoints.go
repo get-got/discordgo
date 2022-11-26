@@ -15,7 +15,7 @@ import "strconv"
 
 // APIVersion is the Discord API version used for the REST and Websocket API.
 var APIVersion = "9"
-var APIVersionSB = "6"
+var APIVersionSB = "9"
 
 // Known Discord API Endpoints.
 var (
