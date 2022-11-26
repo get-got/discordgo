@@ -186,15 +186,19 @@ func (b *Bucket) Release(headers http.Header) error {
 
 	// Udpate remaining if header is present
 	if remaining != "" {
-		parsedRemaining, err := strconv.ParseInt(remaining, 10, 32)
-		if err != nil {
-			parsedRemainingF, err := strconv.ParseFloat(remaining, 32)
+		if strings.Contains(remaining, ".") {
+			parsedRemaining, err := strconv.ParseFloat(remaining, 32)
 			if err != nil {
 				return err
 			}
-			parsedRemaining = int64(parsedRemainingF)
+			b.Remaining = int(parsedRemaining)
+		} else {
+			parsedRemaining, err := strconv.ParseInt(remaining, 10, 32)
+			if err != nil {
+				return err
+			}
+			b.Remaining = int(parsedRemaining)
 		}
-		b.Remaining = int(parsedRemaining)
 	}
 
 	return nil
