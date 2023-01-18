@@ -367,7 +367,7 @@ func (s *Session) UpdateGameStatus(idle int, name string) (err error) {
 // If name!="" then set movie/stream.
 // if otherwise, set status to active, and no activity.
 func (s *Session) UpdateWatchStatus(idle int, name string) (err error) {
-	return s.UpdateStatusComplex(*newUpdateStatusData(idle, ActivityTypeWatching, name, ""))
+	return s.UpdateStatusComplex(*newUpdateStatusData(idle, GameTypeWatching, name, ""))
 }
 
 // UpdateStreamingStatus is used to update the user's streaming status.
