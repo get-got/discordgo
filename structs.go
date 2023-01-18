@@ -17,7 +17,6 @@ import (
 	"math"
 	"net/http"
 	"regexp"
-	"strings"
 	"sync"
 	"time"
 
@@ -156,6 +155,38 @@ type Application struct {
 	Flags               int      `json:"flags,omitempty"`
 }
 
+// ApplicationRoleConnectionMetadataType represents the type of application role connection metadata.
+type ApplicationRoleConnectionMetadataType int
+
+// Application role connection metadata types.
+const (
+	ApplicationRoleConnectionMetadataIntegerLessThanOrEqual     ApplicationRoleConnectionMetadataType = 1
+	ApplicationRoleConnectionMetadataIntegerGreaterThanOrEqual  ApplicationRoleConnectionMetadataType = 2
+	ApplicationRoleConnectionMetadataIntegerEqual               ApplicationRoleConnectionMetadataType = 3
+	ApplicationRoleConnectionMetadataIntegerNotEqual            ApplicationRoleConnectionMetadataType = 4
+	ApplicationRoleConnectionMetadataDatetimeLessThanOrEqual    ApplicationRoleConnectionMetadataType = 5
+	ApplicationRoleConnectionMetadataDatetimeGreaterThanOrEqual ApplicationRoleConnectionMetadataType = 6
+	ApplicationRoleConnectionMetadataBooleanEqual               ApplicationRoleConnectionMetadataType = 7
+	ApplicationRoleConnectionMetadataBooleanNotEqual            ApplicationRoleConnectionMetadataType = 8
+)
+
+// ApplicationRoleConnectionMetadata stores application role connection metadata.
+type ApplicationRoleConnectionMetadata struct {
+	Type                     ApplicationRoleConnectionMetadataType `json:"type"`
+	Key                      string                                `json:"key"`
+	Name                     string                                `json:"name"`
+	NameLocalizations        map[Locale]string                     `json:"name_localizations"`
+	Description              string                                `json:"description"`
+	DescriptionLocalizations map[Locale]string                     `json:"description_localizations"`
+}
+
+// ApplicationRoleConnection represents the role connection that an application has attached to a user.
+type ApplicationRoleConnection struct {
+	PlatformName     string            `json:"platform_name"`
+	PlatformUsername string            `json:"platform_username"`
+	Metadata         map[string]string `json:"metadata"`
+}
+
 // UserConnection is a Connection returned from the UserConnections endpoint
 type UserConnection struct {
 	ID           string         `json:"id"`
@@ -270,6 +301,28 @@ const (
 	ChannelFlagRequireTag ChannelFlags = 1 << 4
 )
 
+// ForumSortOrderType represents sort order of a forum channel.
+type ForumSortOrderType int
+
+const (
+	// ForumSortOrderLatestActivity sorts posts by activity.
+	ForumSortOrderLatestActivity ForumSortOrderType = 0
+	// ForumSortOrderCreationDate sorts posts by creation time (from most recent to oldest).
+	ForumSortOrderCreationDate ForumSortOrderType = 1
+)
+
+// ForumLayout represents layout of a forum channel.
+type ForumLayout int
+
+const (
+	// ForumLayoutNotSet represents no default layout.
+	ForumLayoutNotSet ForumLayout = 0
+	// ForumLayoutListView displays forum posts as a list.
+	ForumLayoutListView ForumLayout = 1
+	// ForumLayoutGalleryView displays forum posts as a collection of tiles.
+	ForumLayoutGalleryView ForumLayout = 2
+)
+
 // A Channel holds all data related to an individual Discord channel.
 type Channel struct {
 	// The ID of the channel.
@@ -358,6 +411,18 @@ type Channel struct {
 
 	// Emoji to use as the default reaction to a forum post.
 	DefaultReactionEmoji ForumDefaultReaction `json:"default_reaction_emoji"`
+
+	// The initial RateLimitPerUser to set on newly created threads in a channel.
+	// This field is copied to the thread at creation time and does not live update.
+	DefaultThreadRateLimitPerUser int `json:"default_thread_rate_limit_per_user"`
+
+	// The default sort order type used to order posts in forum channels.
+	// Defaults to null, which indicates a preferred sort order hasn't been set by a channel admin.
+	DefaultSortOrder *ForumSortOrderType `json:"default_sort_order"`
+
+	// The default forum layout view used to display posts in forum channels.
+	// Defaults to ForumLayoutNotSet, which indicates a layout view has not been set by a channel admin.
+	DefaultForumLayout ForumLayout `json:"default_forum_layout"`
 }
 
 // Mention returns a string which mentions the channel
@@ -372,16 +437,17 @@ func (c *Channel) IsThread() bool {
 
 // A ChannelEdit holds Channel Field data for a channel edit.
 type ChannelEdit struct {
-	Name                 string                 `json:"name,omitempty"`
-	Topic                string                 `json:"topic,omitempty"`
-	NSFW                 *bool                  `json:"nsfw,omitempty"`
-	Position             int                    `json:"position"`
-	Bitrate              int                    `json:"bitrate,omitempty"`
-	UserLimit            int                    `json:"user_limit,omitempty"`
-	PermissionOverwrites []*PermissionOverwrite `json:"permission_overwrites,omitempty"`
-	ParentID             string                 `json:"parent_id,omitempty"`
-	RateLimitPerUser     *int                   `json:"rate_limit_per_user,omitempty"`
-	Flags                *ChannelFlags          `json:"flags,omitempty"`
+	Name                          string                 `json:"name,omitempty"`
+	Topic                         string                 `json:"topic,omitempty"`
+	NSFW                          *bool                  `json:"nsfw,omitempty"`
+	Position                      int                    `json:"position"`
+	Bitrate                       int                    `json:"bitrate,omitempty"`
+	UserLimit                     int                    `json:"user_limit,omitempty"`
+	PermissionOverwrites          []*PermissionOverwrite `json:"permission_overwrites,omitempty"`
+	ParentID                      string                 `json:"parent_id,omitempty"`
+	RateLimitPerUser              *int                   `json:"rate_limit_per_user,omitempty"`
+	Flags                         *ChannelFlags          `json:"flags,omitempty"`
+	DefaultThreadRateLimitPerUser *int                   `json:"default_thread_rate_limit_per_user,omitempty"`
 
 	// NOTE: threads only
 
@@ -394,6 +460,8 @@ type ChannelEdit struct {
 
 	AvailableTags        *[]ForumTag           `json:"available_tags,omitempty"`
 	DefaultReactionEmoji *ForumDefaultReaction `json:"default_reaction_emoji,omitempty"`
+	DefaultSortOrder     *ForumSortOrderType   `json:"default_sort_order,omitempty"` // TODO: null
+	DefaultForumLayout   *ForumLayout          `json:"default_forum_layout,omitempty"`
 
 	// NOTE: forum threads only
 	AppliedTags *[]string `json:"applied_tags,omitempty"`
@@ -848,16 +916,11 @@ type GuildPreview struct {
 }
 
 // IconURL returns a URL to the guild's icon.
-func (g *GuildPreview) IconURL() string {
-	if g.Icon == "" {
-		return ""
-	}
-
-	if strings.HasPrefix(g.Icon, "a_") {
-		return EndpointGuildIconAnimated(g.ID, g.Icon)
-	}
-
-	return EndpointGuildIcon(g.ID, g.Icon)
+//
+//	size:    The size of the desired icon image as a power of two
+//	         Image size can be any power of two between 16 and 4096.
+func (g *GuildPreview) IconURL(size string) string {
+	return iconURL(g.Icon, EndpointGuildIcon(g.ID, g.Icon), EndpointGuildIconAnimated(g.ID, g.Icon), size)
 }
 
 // GuildScheduledEvent is a representation of a scheduled event in a guild. Only for retrieval of the data.
@@ -1063,29 +1126,26 @@ type SystemChannelFlag int
 
 // Block containing known SystemChannelFlag values
 const (
-	SystemChannelFlagsSuppressJoin    SystemChannelFlag = 1 << 0
-	SystemChannelFlagsSuppressPremium SystemChannelFlag = 1 << 1
+	SystemChannelFlagsSuppressJoinNotifications          SystemChannelFlag = 1 << 0
+	SystemChannelFlagsSuppressPremium                    SystemChannelFlag = 1 << 1
+	SystemChannelFlagsSuppressGuildReminderNotifications SystemChannelFlag = 1 << 2
+	SystemChannelFlagsSuppressJoinNotificationReplies    SystemChannelFlag = 1 << 3
 )
 
 // IconURL returns a URL to the guild's icon.
-func (g *Guild) IconURL() string {
-	if g.Icon == "" {
-		return ""
-	}
-
-	if strings.HasPrefix(g.Icon, "a_") {
-		return EndpointGuildIconAnimated(g.ID, g.Icon)
-	}
-
-	return EndpointGuildIcon(g.ID, g.Icon)
+//
+//	size:    The size of the desired icon image as a power of two
+//	         Image size can be any power of two between 16 and 4096.
+func (g *Guild) IconURL(size string) string {
+	return iconURL(g.Icon, EndpointGuildIcon(g.ID, g.Icon), EndpointGuildIconAnimated(g.ID, g.Icon), size)
 }
 
 // BannerURL returns a URL to the guild's banner.
-func (g *Guild) BannerURL() string {
-	if g.Banner == "" {
-		return ""
-	}
-	return EndpointGuildBanner(g.ID, g.Banner)
+//
+//	size:    The size of the desired banner image as a power of two
+//	         Image size can be any power of two between 16 and 4096.
+func (g *Guild) BannerURL(size string) string {
+	return bannerURL(g.Banner, EndpointGuildBanner(g.ID, g.Banner), EndpointGuildBannerAnimated(g.ID, g.Banner), size)
 }
 
 // A UserGuild holds a brief version of a Guild
@@ -1132,12 +1192,22 @@ type GuildParams struct {
 	Region                      string             `json:"region,omitempty"`
 	VerificationLevel           *VerificationLevel `json:"verification_level,omitempty"`
 	DefaultMessageNotifications int                `json:"default_message_notifications,omitempty"` // TODO: Separate type?
+	ExplicitContentFilter       int                `json:"explicit_content_filter,omitempty"`
 	AfkChannelID                string             `json:"afk_channel_id,omitempty"`
 	AfkTimeout                  int                `json:"afk_timeout,omitempty"`
 	Icon                        string             `json:"icon,omitempty"`
 	OwnerID                     string             `json:"owner_id,omitempty"`
 	Splash                      string             `json:"splash,omitempty"`
+	DiscoverySplash             string             `json:"discovery_splash,omitempty"`
 	Banner                      string             `json:"banner,omitempty"`
+	SystemChannelID             string             `json:"system_channel_id,omitempty"`
+	SystemChannelFlags          SystemChannelFlag  `json:"system_channel_flags,omitempty"`
+	RulesChannelID              string             `json:"rules_channel_id,omitempty"`
+	PublicUpdatesChannelID      string             `json:"public_updates_channel_id,omitempty"`
+	PreferredLocale             Locale             `json:"preferred_locale,omitempty"`
+	Features                    []GuildFeature     `json:"features,omitempty"`
+	Description                 string             `json:"description,omitempty"`
+	PremiumProgressBarEnabled   *bool              `json:"premium_progress_bar_enabled,omitempty"`
 }
 
 // A Role stores information about Discord guild member roles.
@@ -1223,13 +1293,14 @@ type VoiceState struct {
 
 // A Presence stores the online, offline, or idle and game status of Guild members.
 type Presence struct {
-	User       *User    `json:"user"`
-	Status     Status   `json:"status"`
-	Game       *Game    `json:"game"`
-	Activities []*Game  `json:"activities"`
-	Nick       string   `json:"nick"`
-	Roles      []string `json:"roles"`
-	Since      *int     `json:"since"`
+	User         *User        `json:"user"`
+	Status       Status       `json:"status"`
+	Game         *Game        `json:"game"`
+	Activities   []*Game      `json:"activities"`
+	Nick         string       `json:"nick"`
+	Roles        []string     `json:"roles"`
+	Since        *int         `json:"since"`
+	ClientStatus ClientStatus `json:"client_status"`
 }
 
 // GameType is the type of "game" (see GameType* consts) in the Game struct
@@ -1348,6 +1419,13 @@ func (m *Member) AvatarURL(size string) string {
 
 }
 
+// ClientStatus stores the online, offline, idle, or dnd status of each device of a Guild member.
+type ClientStatus struct {
+	Desktop Status `json:"desktop"`
+	Mobile  Status `json:"mobile"`
+	Web     Status `json:"web"`
+}
+
 // Status type definition
 type Status string
 
@@ -1464,6 +1542,14 @@ type AutoModerationTriggerMetadata struct {
 	// Internally pre-defined wordsets which will be searched for in content.
 	// NOTE: should be only used with keyword preset trigger type.
 	Presets []AutoModerationKeywordPreset `json:"presets,omitempty"`
+
+	// Substrings which should not trigger the rule.
+	// NOTE: should be only used with keyword or keyword preset trigger type.
+	AllowList *[]string `json:"allow_list,omitempty"`
+
+	// Total number of unique role and user mentions allowed per message.
+	// NOTE: should be only used with mention spam trigger type.
+	MentionTotalLimit int `json:"mention_total_limit,omitempty"`
 }
 
 // AutoModerationActionType represents an action which will execute whenever a rule is triggered.
