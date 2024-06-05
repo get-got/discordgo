@@ -278,7 +278,7 @@ func (s *Session) RequestWithLockedBucket(method, urlStr, contentType string, b 
 		rl := TooManyRequests{}
 		err = Unmarshal(response, &rl)
 		if err != nil {
-			s.log(LogError, "rate limit unmarshal error, %s", err)
+			s.log(LogError, "rate limit unmarshal error, %s: \"%s\"", err, string(response))
 			return
 		}
 
