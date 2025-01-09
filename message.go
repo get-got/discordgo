@@ -123,6 +123,8 @@ type Message struct {
 	// Is sent with Rich Presence-related chat embeds
 	Application *MessageApplication `json:"application"`
 
+	MessageSnapshots []*MessageSnapshotStruct `json:"message_snapshots"`
+
 	// MessageReference contains reference data sent with crossposted or reply messages.
 	// This does not contain the reference *to* this message; this is for when *this* message references another.
 	// To generate a reference to this message, use (*Message).Reference().
@@ -472,6 +474,70 @@ func (m *Message) Reference() *MessageReference {
 		ChannelID: m.ChannelID,
 		MessageID: m.ID,
 	}
+}
+
+type MessageSnapshotStruct struct {
+	Message *MessageSnapshot `json:"message"`
+}
+
+type MessageSnapshot struct {
+	// The ID of the message.
+	ID string `json:"id"`
+
+	// The ID of the channel in which the message was sent.
+	ChannelID string `json:"channel_id"`
+
+	// The ID of the guild in which the message was sent.
+	GuildID string `json:"guild_id,omitempty"`
+
+	// The content of the message.
+	Content string `json:"content"`
+
+	// The time at which the messsage was sent.
+	// CAUTION: this field may be removed in a
+	// future API version; it is safer to calculate
+	// the creation time via the ID.
+	Timestamp time.Time `json:"timestamp"`
+
+	// The time at which the last edit of the message
+	// occurred, if it has been edited.
+	EditedTimestamp *time.Time `json:"edited_timestamp"`
+
+	// The roles mentioned in the message.
+	MentionRoles []string `json:"mention_roles"`
+
+	// Whether the message is text-to-speech.
+	TTS bool `json:"tts"`
+
+	// Whether the message mentions everyone.
+	MentionEveryone bool `json:"mention_everyone"`
+
+	// The author of the message. This is not guaranteed to be a
+	// valid user (webhook-sent messages do not possess a full author).
+	Author *User `json:"author"`
+
+	// A list of attachments present in the message.
+	Attachments []*MessageAttachment `json:"attachments"`
+
+	// A list of components attached to the message.
+	Components []MessageComponent `json:"-"`
+
+	// A list of embeds present in the message.
+	Embeds []*MessageEmbed `json:"embeds"`
+
+	// A list of users mentioned in the message.
+	Mentions []*User `json:"mentions"`
+
+	// The type of the message.
+	Type MessageType `json:"type"`
+
+	// The flags of the message, which describe extra features of a message.
+	// This is a combination of bit masks; the presence of a certain permission can
+	// be checked by performing a bitwise AND between this int and the flag.
+	Flags MessageFlags `json:"flags"`
+
+	// An array of Sticker objects, if any were sent.
+	StickerItems []*Sticker `json:"sticker_items"`
 }
 
 // ContentWithMentionsReplaced will replace all @<id> mentions with the
